@@ -1,0 +1,457 @@
+---
+title: "Análise Fatorial - Programa JC."
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# CONSULTORIA JOVENS CONSTRUTORES
+library(likert)
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+library(epiDisplay)
+library(psych)
+library(corrplot)
+base_JC = read_excel("Base_final.xls")
+base_JC = na.omit(base_JC)
+
+## ANÁLISE EXPLORATÓRIA
+#Para as variáveis que não são da escala likert:
+tab1(base_JC$Tratamento,graph = F)
+tab1(base_JC$Local,graph = F)
+tab1(base_JC$mangueira,graph = F)
+tab1(base_JC$branco,graph = F)
+tab1(base_JC$homem,graph = F)
+tab1(base_JC$mora_pai_mae,graph = F)
+tab1(base_JC$filhos,graph = F)
+tab1(base_JC$escolaridade,graph = F)
+
+#######################################################################################
+# Para Q1 ate Q6
+consultoria_likert = base_JC[,c(4:20)]
+consultoria_likert = consultoria_likert[,c(1:6)]
+# Transformar em factor
+consultoria_likert <- lapply(consultoria_likert, function(x){ factor(x, 
+                             levels = c("5", "4", "3", "2", "1"), 
+                             labels = c("Discordo Totalmente", "Discordo Parcialmente", 
+                                        "Nem concordo, nem discordo", 
+                                        "Concordo Parcialmente", "Concordo Totalmente"))})
+lik <- likert(as.data.frame(consultoria_likert))
+
+# Plot1 de concordancia x discordancia
+likert.bar.plot(lik, plot.percents=F, legend = "Respostas", low.color = "red", 
+                text.size=4) + 
+  ggtitle("") + labs(title = "Grau de concordância às perguntas Q1 até Q6",
+                     x = "Perguntas", y = "Porcentagem") + theme_bw() + 
+  theme(legend.position = "bottom") +
+  theme(plot.title = element_text(hjust = 0.5, size=14, face="bold"),
+        text = element_text(size=15), plot.subtitle = element_text(hjust = 0.5, size=12))
+
+#######################################################################################
+# Para Q7 ate Q12
+consultoria_likert = base_JC[,c(4:20)]
+consultoria_likert = consultoria_likert[,c(7:12)]
+# Transformar em factor
+consultoria_likert <- lapply(consultoria_likert, function(x){ factor(x, 
+                             levels = c("1", "2", "3", "4", "5"), 
+                             labels = c("Muito Insatisfeito", "Insatisfeito", "Indiferente", 
+                                        "Satisfeito", "Muito Satisfeito"))})
+lik <- likert(as.data.frame(consultoria_likert))
+
+# Plot2 de concordancia x discordancia
+likert.bar.plot(lik, plot.percents=F, legend = "Respostas", low.color = "red", 
+                text.size=4) + 
+  ggtitle("") + labs(title = "Grau de satisfação às perguntas Q7 até Q12",
+                     x = "Perguntas", y = "Porcentagem") + theme_bw() + 
+  theme(legend.position = "bottom") +
+  theme(plot.title = element_text(hjust = 0.5, size=14, face="bold"),
+        text = element_text(size=15), plot.subtitle = element_text(hjust = 0.5, size=12))
+
+#######################################################################################
+# Para Q13 ate Q17
+consultoria_likert = base_JC[,c(4:20)]
+consultoria_likert = consultoria_likert[,c(13:17)]
+# Transformar em factor
+consultoria_likert <- lapply(consultoria_likert, function(x){ factor(x, 
+                             levels = c("1", "2", "3", "4", "5", "6", "7"), 
+                             labels = c("Discordo Totalmente", "Discordo", 
+                                        "Discordo Parcialmente", 
+                                        "Nem concordo, nem discordo", 
+                                        "Concordo Parcialmente", 
+                                        "Concordo", "Concordo Totalmente"))})
+lik <- likert(as.data.frame(consultoria_likert))
+
+# Plot3 de concordancia x discordancia
+likert.bar.plot(lik, plot.percents=F, legend = "Respostas", low.color = "red", 
+                text.size=4) + 
+  ggtitle("") + labs(title = "Grau de concordância às perguntas Q13 até Q17",
+                     x = "Perguntas", y = "Porcentagem") + theme_bw() + 
+  theme(legend.position = "bottom") +
+  theme(plot.title = element_text(hjust = 0.5, size=14, face="bold"),
+        text = element_text(size=15), plot.subtitle = element_text(hjust = 0.5, size=12))
+
+###################################################################################
+## ANÁLISE FATORIAL
+## Passo 1 – Tamanho da amostra
+# Carrega o pacote para ler o banco de dados
+library(readxl)
+respostas_instrumento = read_excel("Base_final.xls")
+respostas_instrumento = na.omit(respostas_instrumento)
+respostas_instrumento = respostas_instrumento[,c(4:20)]
+dim(respostas_instrumento)
+dim(respostas_instrumento)[1]>5*dim(respostas_instrumento)[2]
+
+## Passo 2 – Nível de mensuração
+# As variáveis já estão ok, em escala numérica
+
+## Passo 3 – Matriz de correlações
+# Carrega o pacote
+require(psych)
+# Calcula a correlacao
+correlacao<-polychoric(respostas_instrumento)
+# Imprime as correlacoes com 2 casas decimais
+round(correlacao$rho,2)
+
+corPlot(correlacao$rho,numbers=TRUE,upper=FALSE,diag=FALSE)
+
+## Passo 4 – Teste de Bartlett (BTS)
+# Teste bartlett
+cortest.bartlett(correlacao$rho,n=nrow(respostas_instrumento))
+# $chisq
+# [1] 1048.449
+# 
+# $p.value
+# [1] 1.089428e-140
+# 
+# $df
+# [1] 136
+
+## Passo 5 – Teste de Kaiser-Meyer-Olkim (KMO)
+# KMO
+KMO(correlacao$rho)
+# Kaiser-Meyer-Olkin factor adequacy
+# Call: KMO(r = correlacao$rho)
+# Overall MSA =  0.72
+# MSA for each item = 
+#   Q1   Q2   Q3   Q4   Q5   Q6   Q7   Q8   Q9  Q10  Q11  Q12  Q13  Q14  Q15  Q16 
+# 0.79 0.71 0.80 0.79 0.65 0.80 0.84 0.66 0.68 0.65 0.66 0.73 0.74 0.67 0.60 0.59 
+#  Q17 
+# 0.78 
+
+
+## Passo 6 – Determinação do número de fatores 
+# Calculo dos autovalores
+round(eigen(correlacao$rho)$values,2)
+# Numero de autovalores maiores que 1
+sum(eigen(correlacao$rho)$values>1)
+# [1] 5
+
+# Scree-plot
+plot(eigen(correlacao$rho)$values, type = "b", ylab='Autovalores')
+
+# Calculo da proporcao explicada por cada fator
+proporcao_explicacao<-eigen(correlacao$rho)$values/
+sum(eigen(correlacao$rho)$values)
+# Calculo da proporcao de explicacao acumulada
+proporcao_acumulada <- cumsum(proporcao_explicacao)
+# Imprime a proporcao acumulada com 2 casas decimais
+round(proporcao_acumulada,2)
+#  [1] 0.21 0.32 0.42 0.50 0.56 0.62 0.67 0.72 0.76 0.80 0.84 0.87 0.91 0.93 0.96
+# [16] 0.98 1.00
+
+## Passo 7 – Extração das cargas fatoriais 
+## Extracao dos 5 fatores sem rotacao e usando o metodo ml
+fa_sem_rotacao <- fa(correlacao$rho,5,rotate="none", fm="ml")
+# Mostra as cargas fatoriais
+loadings(fa_sem_rotacao)
+
+## Passo 8 – Rotação dos fatores
+# fa_com_rotacao_varimax <- fa(correlacao$rho,5,rotate="varimax", fm="ml")
+# loadings(fa_com_rotacao_varimax)
+
+# Extracao dos 5 fatores com rotacao e usando o metodo ml
+fa_com_rotacao <- fa(correlacao$rho,5,rotate="oblimin", fm="ml")
+# Mostra as cargas fatoriais
+loadings(fa_com_rotacao)
+print(fa_com_rotacao$loadings, digits = 3, cutoff = 0.31)
+
+# Mostra as comunalidades
+round(fa_com_rotacao$communalities,3)
+
+## Síntese dos resultados 
+print(fa_com_rotacao) 
+
+# Refazendo o Passo 8
+respostas_instrumento2 = respostas_instrumento[,-c(12,13,15)]
+correlacao2<-polychoric(respostas_instrumento2)
+fa_com_rotacao2 <- fa(correlacao2$rho,5,rotate="oblimin", fm="ml")
+loadings(fa_com_rotacao2)
+print(fa_com_rotacao2$loadings, digits = 3, cutoff = 0.325)
+
+# Mostra as comunalidades
+round(fa_com_rotacao2$communalities,3)
+
+## Síntese dos resultados 
+print(fa_com_rotacao2) 
+
+## Outras ferramentas do R para a análise fatorial 
+# Diagrama dos fatores
+fa.diagram(fa_com_rotacao2)
+
+## Gráfico representacao cargas fatoriais
+# Salva as cargas em uma tabela
+cargas<-data.frame(loadings(fa_com_rotacao2)[,c(1,2,3,4,5)])
+# Cria uma coluna com o nomes dos itens
+cargas$Itens<-row.names(cargas)
+# Reordena os itens
+Ord <- 14:1
+cargas$Itens <- reorder(cargas$Itens, Ord)
+# Muda o nomes das colunas
+colnames(cargas)[1:5]<-c("Fator 5","Fator 4","Fator 1","Fator 2","Fator 3")
+# Muda o formato dos dados
+# Carrega o pacote
+require(reshape2)
+loadings.m <- melt(cargas, id="Itens",
+ measure=c("Fator 5","Fator 4","Fator 1","Fator 2","Fator 3"),
+ variable.name="Fator", value.name="Cargas")
+# Carrega o pacotes
+require(ggplot2)
+# Plota o gráfico
+ggplot(loadings.m, aes(Itens, abs(Cargas), fill=Cargas)) +
+facet_wrap(~ Fator, nrow=1) + #coloca os fatores em caixas distintas
+ geom_bar(stat="identity") + #faz as barras
+ coord_flip() + #inverte os eixos
+ #define as cores
+ scale_fill_gradient2(name = "Cargas",
+ high = "blue", mid = "white", low = "red",
+ midpoint=0, guide=F) +
+ ylab("Cargas Fatoriais") + #muda o o nome do eixo
+ theme_bw(base_size=10) #muda o tamanho da fonte
+
+## Passo 9 – Interpretação dos fatores
+print(fa_com_rotacao2)
+
+#################################################################################
+#################################################################################
+
+## Uso de escores fatoriais em um modelo de regressão
+# Calculo dos escores fatoriais
+scores_fatores = factor.scores(respostas_instrumento2,fa_com_rotacao2, 
+                               method="regression")
+base_JC$score1 = scores_fatores$scores[,1]
+base_JC$score2 = scores_fatores$scores[,2]
+base_JC$score3 = scores_fatores$scores[,3]
+base_JC$score4 = scores_fatores$scores[,4]
+base_JC$score5 = scores_fatores$scores[,5]
+
+# Recodifica a variável Tratamento
+base_JC$Tratamento<-factor(base_JC$Tratamento)
+levels(base_JC$Tratamento)<-c("Tratamento","Controle")
+
+# Recodifica a variável Local
+base_JC$Local<-factor(base_JC$Local)
+levels(base_JC$Local)<-c("Borel","Mangueira")
+
+# Recodifica a variável mangueira
+base_JC$mangueira<-factor(base_JC$mangueira)
+levels(base_JC$mangueira)<-c("Borel","Mangueira")
+
+# Recodifica a variável branco
+base_JC$branco<-factor(base_JC$branco)
+levels(base_JC$branco)<-c("Não Branco","Branco")
+
+# Recodifica a variável homem
+base_JC$homem<-factor(base_JC$homem)
+levels(base_JC$homem)<-c("Mulher","Homem")
+
+# Recodifica a variável mora_pai_mae
+base_JC$mora_pai_mae<-factor(base_JC$mora_pai_mae)
+levels(base_JC$mora_pai_mae)<-c("Não mora com pai e mãe","Mora com pai e mãe")
+
+# Recodifica a variável filhos
+base_JC$filhos<-factor(base_JC$filhos)
+levels(base_JC$filhos)<-c("Não possui filhos","Possui filhos")
+
+# Recodifica a variável escolaridade
+base_JC$escolaridade<-factor(base_JC$escolaridade)
+levels(base_JC$escolaridade)<-c("Até Ensino Fundamental",
+                                "Ensino Médio Completo ou Incompleto",
+                                "Ensino Superior")
+
+# Retirando ID
+base_JC = base_JC[,-c(1)]
+
+##################
+# Para o fator1: #
+##################
+#Como a variável Local e Mangueira tratam sobre as mesmas coisas,
+#foi retirada a variável Local da criação do modelo. Ficando então:
+modelo_fator1 = lm(score1 ~ Tratamento + mangueira + branco + homem + 
+                     mora_pai_mae + filhos + escolaridade, data=base_JC)
+summary(modelo_fator1)
+
+#Só com intercepto + escolaridade, temos:
+modelo_fator1 = lm(score1 ~ escolaridade, data=base_JC)
+summary(modelo_fator1)
+
+car::vif(modelo_fator1) #erro, só 1 variável
+
+#Normalidade:
+par(mfrow=c(1,2))
+qqnorm(modelo_fator1$residuals,ylab = "Quantis Amostrais",xlab = "Quantis Teóricos",main = "QQ-plot - Normalidade")
+qqline(modelo_fator1$residuals,lwd=3,col="red")
+
+resest1 = rstudent(modelo_fator1)
+ks.test(resest1,"pnorm",mean(resest1),sd(resest1))
+#Normalidade aceita.
+
+#Homocedasticidade:
+st_res = studres(modelo_fator1)
+plot(modelo_fator1$fitted.values,st_res,ylab="Resíduos Estudentizados",xlab="Score Estimado",main="Homocedasticidade \nda Variância")
+abline(h=0,col="red")
+
+lmtest::bptest(modelo_fator1)
+#Homocedasticidade aceita.
+
+
+
+##################
+# Para o fator2: #
+##################
+#Como a variável Local e Mangueira tratam sobre as mesmas coisas,
+#foi retirada a variável Local da criação do modelo. Ficando então:
+modelo_fator2 = lm(score2 ~ Tratamento + mangueira + branco + homem + 
+                     mora_pai_mae + filhos + escolaridade, data=base_JC)
+summary(modelo_fator2)
+
+#Só com Tratamento + mangueira + branco, temos:
+modelo_fator2 = lm(score2 ~ Tratamento + mangueira + branco -1, data=base_JC)
+summary(modelo_fator2)
+
+
+car::vif(modelo_fator2) #multicolinearidade ok.
+
+#Normalidade:
+par(mfrow=c(1,2))
+qqnorm(modelo_fator2$residuals,ylab = "Quantis Amostrais",xlab = "Quantis Teóricos",main = "QQ-plot - Normalidade")
+qqline(modelo_fator2$residuals,lwd=3,col="red")
+
+
+resest2 = rstudent(modelo_fator2)
+ks.test(resest2,"pnorm",mean(resest2),sd(resest2))
+#Normalidade aceita.
+
+#Homocedasticidade:
+st_res = studres(modelo_fator2)
+plot(modelo_fator2$fitted.values,st_res,ylab="Resíduos Estudentizados",xlab="Score Estimado",main="Homocedasticidade \nda Variância")
+abline(h=0,col="red")
+
+lmtest::bptest(modelo_fator2)
+#Homocedasticidade aceita.
+
+
+##################
+# Para o fator3: #
+##################
+#Como a variável Local e Mangueira tratam sobre as mesmas coisas,
+#foi retirada a variável Local da criação do modelo. Ficando então:
+modelo_fator3 = lm(score3 ~ Tratamento + mangueira + branco + homem + 
+                     mora_pai_mae + filhos + escolaridade, data=base_JC)
+summary(modelo_fator3)
+
+# #Só com Tratamento + mangueira + branco, temos:
+# modelo_fator3 = lm(score3 ~ Tratamento + mangueira + branco -1, data=base_JC)
+# summary(modelo_fator3)
+
+
+car::vif(modelo_fator3) #multicolinearidade ok.
+
+#Normalidade:
+par(mfrow=c(1,2))
+qqnorm(modelo_fator3$residuals,ylab = "Quantis Amostrais",xlab = "Quantis Teóricos",main = "QQ-plot - Normalidade")
+qqline(modelo_fator3$residuals,lwd=3,col="red")
+
+
+resest3 = rstudent(modelo_fator3)
+ks.test(resest3,"pnorm",mean(resest3),sd(resest3))
+#Normalidade aceita.
+
+#Homocedasticidade:
+st_res = studres(modelo_fator3)
+plot(modelo_fator3$fitted.values,st_res,ylab="Resíduos Estudentizados",xlab="Score Estimado",main="Homocedasticidade \nda Variância")
+abline(h=0,col="red")
+
+lmtest::bptest(modelo_fator3)
+#Homocedasticidade aceita.
+
+
+##################
+# Para o fator4: #
+##################
+#Como a variável Local e Mangueira tratam sobre as mesmas coisas,
+#foi retirada a variável Local da criação do modelo. Ficando então:
+modelo_fator4 = lm(score4 ~ Tratamento + mangueira + branco + homem + 
+                     mora_pai_mae + filhos + escolaridade, data=base_JC)
+summary(modelo_fator4)
+
+#Só com mangueira, temos:
+modelo_fator4 = lm(score4 ~ mangueira -1, data=base_JC)
+summary(modelo_fator4)
+
+
+car::vif(modelo_fator4) #erro, só 1 variável
+
+#Normalidade:
+par(mfrow=c(1,2))
+qqnorm(modelo_fator4$residuals,ylab = "Quantis Amostrais",xlab = "Quantis Teóricos",main = "QQ-plot - Normalidade")
+qqline(modelo_fator4$residuals,lwd=3,col="red")
+
+
+resest4 = rstudent(modelo_fator4)
+ks.test(resest4,"pnorm",mean(resest4),sd(resest4))
+#Normalidade aceita.
+
+#Homocedasticidade:
+st_res = studres(modelo_fator4)
+plot(modelo_fator4$fitted.values,st_res,ylab="Resíduos Estudentizados",xlab="Score Estimado",main="Homocedasticidade \nda Variância")
+abline(h=0,col="red")
+
+lmtest::bptest(modelo_fator4)
+#Homocedasticidade aceita.
+
+
+##################
+# Para o fator5: #
+##################
+#Como a variável Local e Mangueira tratam sobre as mesmas coisas,
+#foi retirada a variável Local da criação do modelo. Ficando então:
+modelo_fator5 = lm(score5 ~ Tratamento + mangueira + branco + homem + 
+                     mora_pai_mae + filhos + escolaridade, data=base_JC)
+summary(modelo_fator5)
+
+#Só com branco, temos:
+modelo_fator5 = lm(score5 ~ branco -1, data=base_JC)
+summary(modelo_fator5)
+
+
+car::vif(modelo_fator5) #multicolinearidade ok.
+
+#Normalidade:
+par(mfrow=c(1,2))
+qqnorm(modelo_fator5$residuals,ylab = "Quantis Amostrais",xlab = "Quantis Teóricos",main = "QQ-plot - Normalidade")
+qqline(modelo_fator5$residuals,lwd=3,col="red")
+
+
+resest5 = rstudent(modelo_fator5)
+ks.test(resest5,"pnorm",mean(resest5),sd(resest5))
+#Normalidade aceita.
+
+#Homocedasticidade:
+st_res = studres(modelo_fator5)
+plot(modelo_fator5$fitted.values,st_res,ylab="Resíduos Estudentizados",xlab="Score Estimado",main="Homocedasticidade \nda Variância")
+abline(h=0,col="red")
+
+lmtest::bptest(modelo_fator5)
+#Homocedasticidade aceita.
+
+```
